@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>九九 3Dフリップカード</title>
+<style>
+body {
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+  min-height: 100vh;
+  padding: 10px;
+}
+
+#start-button, #result {
+  display: block;
+  margin: 20px auto;
+  padding: 10px 20px;
+  font-size: 1.2rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#result, #progress { display: none; }
+
+.flip-card-container {
+  display: none;
+  perspective: 1000px;
+  width: 200px;
+  height: 200px;
+  margin: 20px auto;
+  transform-style: preserve-3d;
+  transition: transform 0.8s;
+}
+
+.showing { display: block; }
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  transition: transform 0.8s;
+  transform-style: preserve-3d;
+  border-radius: 10px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.flip-card-front, .flip-card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  border-radius: 10px;
+  background-color: #fff;
+}
+
+.flip-card-back { transform: rotateY(180deg); }
+
+/* 段数ごとの色分け (寒色から暖色へグラデーション) */
+.dan1 .flip-card-front { background-color: hsl(200, 100%, 80%); }
+.dan2 .flip-card-front { background-color: hsl(180, 100%, 80%); }
+.dan3 .flip-card-front { background-color: hsl(150, 100%, 80%); }
+.dan4 .flip-card-front { background-color: hsl(120, 100%, 80%); }
+.dan5 .flip-card-front { background-color: hsl(90, 100%, 80%); }
+.dan6 .flip-card-front { background-color: hsl(60, 100%, 80%); }
+.dan7 .flip-card-front { background-color: hsl(45, 100%, 80%); }
+.dan8 .flip-card-front { background-color: hsl(30, 100%, 80%); }
+.dan9 .flip-card-front { background-color: hsl(0, 100%, 80%); }
+
+#progress {
+  margin-top: 10px;
+  font-size: 1.1rem;
+}
+</style>
+</head>
+<body>
+
+<button id="start-button">スタート</button>
+<div id="flip-card-container" class="flip-card-container">
+  <div id="flip-card-inner" class="flip-card-inner">
+    <div id="flip-card-front" class="flip-card-front"></div>
+    <div id="flip-card-back" class="flip-card-back"></div>
+  </div>
+</div>
+<div id="result"></div>
+<div id="progress"></div>
+
+<script>
+const startButton = document.getElementById('start-button');
+const flipCardContainer = document.getElementById('flip-card-container');
+const flipCardInner = document.getElementById('flip-card-inner');
+const flipCardFront = document.getElementById('flip-card-front');
+const flipCardBack = document.getElementById('flip-card-back');
+const result = document.getElementById('result');
+const progress = document.getElementById('progress');
+
+let startTime;
+let cards = [];
+let currentCardIndex = 0;
+let tapCount = 0;
+
+for (let i = 1; i <= 9; i++) {
+  for (let j = 1; j <= 9; j++) {
+    cards.push({ question: `${i} × ${j}`, answer: i * j, dan: i });
+  }
+}
+
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+startButton.addEventListener('click', () => {
+  startTime = Date.now();
+  startButton.style.display = 'none';
+  flipCardContainer.classList.add("showing");
+  result.style.display = 'none';
+  progress.style.display = 'block';
+  shuffle(cards);
+  showCard();
+});
+
+flipCardContainer.addEventListener('click', () => {
+  tapCount++;
+
+  if (tapCount === 1) {
+    flipCardInner.style.transform = "rotateY(180deg)";
+  } else if (tapCount === 2) {
+    if (currentCardIndex < 80) {
+      currentCardIndex++;
+      flipCardContainer.style.display = "none"; // カードを一瞬非表示にする
+      setTimeout(() => {
+        flipCardContainer.style.transform = "";
+        flipCardInner.style.transform = "";
+        showCard();
+        flipCardContainer.style.display = "block";
+        tapCount = 0;
+      }, 0);
+    } else {
+      const endTime = Date.now();
+      const elapsedTime = (endTime - startTime) / 1000;
+      result.textContent = `おわり！ タイム: ${elapsedTime.toFixed(2)}秒`;
+      result.style.display = 'block';
+      flipCardContainer.style.display = 'none';
+      progress.style.display = 'none';
+      tapCount = 0;
+      startButton.style.display = 'block'; 
+    }
+  }
+});
+
+function showCard() {
+  const currentCard = cards[currentCardIndex];
+  flipCardFront.textContent = currentCard.question;
+  flipCardBack.textContent = currentCard.answer;
+  flipCardFront.style.backgroundColor = `hsl(${200 - (currentCard.dan - 1) * 22.22}, 100%, 80%)`;
+  progress.textContent = `${currentCardIndex + 1}/81`;
+}
+
+</script>
+
+</body>
+</html>
